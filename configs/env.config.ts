@@ -10,6 +10,7 @@ export const config = {
   openAI: {
     apiKey: process.env.OPEN_AI_API_KEY,
     organizationID: process.env.OPEN_AI_ORG_ID,
+    maxTokens: parseInt(process.env.MAX_TOKENS, 10),
   },
   cloudinary: {
     api_key: process.env.CLOUDINARY_API_KEY,
