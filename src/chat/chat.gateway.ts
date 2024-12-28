@@ -28,7 +28,11 @@ export class ChatGateway
     Socket,
     {
       connectedAt: number;
-      chatHistory: Array<{ role: 'user' | 'ai'; content: string }>;
+      chatHistory: Array<{
+        role: 'user' | 'ai';
+        content: string;
+        createdAt: Date;
+      }>;
     }
   > = new Map();
   private maxClients = 5_000;
@@ -89,15 +93,23 @@ export class ChatGateway
       return;
     }
 
-    client.chatHistory.push({ role: 'user', content: body.prompt });
+    client.chatHistory.push({
+      role: 'user',
+      content: body.prompt,
+      createdAt: new Date(),
+    });
 
-    const data = await this.chatService.getTextResponse(socket.id, body);
+    const message = await this.chatService.getTextResponse(socket.id, body);
 
-    client.chatHistory.push({ role: 'ai', content: data });
+    client.chatHistory.push({
+      role: 'ai',
+      content: message,
+      createdAt: new Date(),
+    });
 
     socket.emit('message-response', {
       userMessage: body.prompt,
-      aiMessage: data,
+      aiMessage: message,
     });
   }
 
