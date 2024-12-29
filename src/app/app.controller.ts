@@ -34,7 +34,7 @@ export class AppController {
     const data = await this.cloudinary.upload({
       file,
       folder: 'CleoAI',
-      maxSize: 512,
+      maxSize: 524_288,
       public_id: randomUUID(),
       mimeTypes: ['image/png', 'image/jpeg', 'image/jpg'],
     });
