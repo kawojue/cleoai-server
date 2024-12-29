@@ -5,3 +5,5 @@ interface UploadOption {
   public_id?: string;
   mimeTypes?: string[];
 }
+
+type Role = 'user' | 'ai';

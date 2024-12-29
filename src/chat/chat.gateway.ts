@@ -30,7 +30,7 @@ export class ChatGateway
     {
       connectedAt: number;
       chatHistory: Array<{
-        role: 'user' | 'ai';
+        role: Role;
         message: {
           content?: string;
           url?: string;
@@ -91,58 +91,59 @@ export class ChatGateway
     const client = this.clients.get(socket);
 
     if (!client) {
-      socket.emit('error', {
-        status: HttpStatus.NOT_FOUND,
-        message: 'Client not connected',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.NOT_FOUND,
+        'Client not connected',
+      );
     }
 
     if (!body.prompt) {
-      socket.emit('error', {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Prompt is required',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.BAD_REQUEST,
+        'Prompt is required',
+      );
     }
 
     if (body.prompt.length > 150) {
-      socket.emit('error', {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Prompt is too large',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.BAD_REQUEST,
+        'Prompt is too large',
+      );
     }
 
-    client.chatHistory.push({
-      role: 'user',
+    const userMessage = {
+      role: 'user' as Role,
       message: {
         url: body.url,
         content: body.prompt,
       },
       createdAt: new Date(),
-    });
+    };
+
+    client.chatHistory.push(userMessage);
 
     const response = await this.chatService.promptResponse(socket.id, body);
 
     if (!response.success) {
-      socket.emit('error', {
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: response.message,
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        response.message,
+      );
     }
 
-    client.chatHistory.push({
-      role: 'ai',
+    const aiMessage = {
+      role: 'ai' as Role,
       createdAt: new Date(),
       message: { content: response.message },
-    });
+    };
 
-    socket.emit('message-response', {
-      userMessage: body.prompt,
-      aiMessage: response.message,
-    });
+    client.chatHistory.push(aiMessage);
+
+    socket.emit('message-response', { userMessage, aiMessage });
   }
 
   @SubscribeMessage('generate-image')
@@ -153,59 +154,60 @@ export class ChatGateway
     const client = this.clients.get(socket);
 
     if (!client) {
-      socket.emit('error', {
-        status: HttpStatus.NOT_FOUND,
-        message: 'Client not connected',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.NOT_FOUND,
+        'Client not connected',
+      );
     }
 
     if (!prompt) {
-      socket.emit('error', {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Prompt is required',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.BAD_REQUEST,
+        'Prompt is required',
+      );
     }
 
     if (prompt.length > 100) {
-      socket.emit('error', {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Prompt is too large',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.BAD_REQUEST,
+        'Prompt is too large',
+      );
     }
 
-    client.chatHistory.push({
-      role: 'user',
+    const userMessage = {
+      role: 'user' as Role,
       message: {
         content: prompt,
       },
       createdAt: new Date(),
-    });
+    };
+
+    client.chatHistory.push(userMessage);
 
     const response = await this.chatService.imageResponse(socket.id, {
       prompt,
     });
 
     if (!response.success) {
-      socket.emit('error', {
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: response.message,
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        response.message,
+      );
     }
 
-    client.chatHistory.push({
-      role: 'ai',
+    const aiMessage = {
+      role: 'ai' as Role,
       createdAt: new Date(),
       message: { content: response.message },
-    });
+    };
 
-    socket.emit('image-response', {
-      userMessage: prompt,
-      aiMessage: response.message,
-    });
+    client.chatHistory.push(aiMessage);
+
+    socket.emit('image-response', { userMessage, aiMessage });
   }
 
   @SubscribeMessage('text-to-speech')
@@ -216,11 +218,11 @@ export class ChatGateway
     const client = this.clients.get(socket);
 
     if (!client) {
-      socket.emit('error', {
-        status: HttpStatus.NOT_FOUND,
-        message: 'Client not connected',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.NOT_FOUND,
+        'Client not connected',
+      );
     }
 
     const chatHistory = client.chatHistory;
@@ -230,37 +232,39 @@ export class ChatGateway
       (chatHistory.length > 0 &&
         !chatHistory[chatHistory.length - 1]?.message?.content)
     ) {
-      socket.emit('error', {
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Text is required',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.BAD_REQUEST,
+        'Text is required',
+      );
     }
 
-    text = text || chatHistory[chatHistory.length - 1]?.message?.content;
+    const messageText =
+      text || chatHistory[chatHistory.length - 1]?.message?.content;
 
-    const response = await this.chatService.textToSpeechResponse({ text });
+    const response = await this.chatService.textToSpeechResponse({
+      text: messageText,
+    });
 
     if (!response.success) {
-      socket.emit('error', {
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        message: response.message,
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        response.message as string,
+      );
     }
 
-    client.chatHistory.push({
-      role: 'ai',
+    const aiMessage = {
+      role: 'ai' as Role,
       message: {
         audio: response.message,
       },
       createdAt: new Date(),
-    });
+    };
 
-    socket.emit('audio-response', {
-      userMessage: null,
-      aiMessage: response.message,
-    });
+    client.chatHistory.push(aiMessage);
+
+    socket.emit('audio-response', { userMessage: null, aiMessage });
   }
 
   @SubscribeMessage('fetch-messages')
@@ -268,11 +272,11 @@ export class ChatGateway
     const client = this.clients.get(socket);
 
     if (!client) {
-      socket.emit('error', {
-        status: HttpStatus.NOT_FOUND,
-        message: 'Client not connected',
-      });
-      return;
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.NOT_FOUND,
+        'Client not connected',
+      );
     }
 
     socket.emit('chat-history', { chatHistory: client.chatHistory });

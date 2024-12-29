@@ -1,7 +1,7 @@
 import { OpenAI } from 'openai';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { config } from 'configs/env.config';
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { GenImageDTO, SendMessageDTO, TextToSpeechDTO } from './chat.dto';
 
 @Injectable()
@@ -113,5 +113,9 @@ export class ChatService {
         message: 'An error occured',
       };
     }
+  }
+
+  emitError(socket: Socket, status: HttpStatus, message: string) {
+    socket.emit('error', { status, message });
   }
 }
