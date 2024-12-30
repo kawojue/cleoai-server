@@ -30,26 +30,28 @@ export class ChatService {
     const messages: any[] = [
       {
         role: 'user',
-        content: { type: 'text', text: body.prompt },
+        content: [{ type: 'text', text: body.prompt }],
       },
     ];
 
     if (body?.url) {
       messages.push({
         role: 'user',
-        content: {
-          type: 'image_url',
-          image_url: {
-            url: body.url,
-            detail: 'low',
+        content: [
+          {
+            type: 'image_url',
+            image_url: {
+              url: body.url,
+              detail: 'low',
+            },
           },
-        },
+        ],
       });
     }
 
     try {
       const response = await this.openai.chat.completions.create({
-        model: 'chatgpt-4o-latest',
+        model: 'gpt-4o-mini',
         messages,
         user: clientId,
         max_tokens: config.openAI.maxTokens,
