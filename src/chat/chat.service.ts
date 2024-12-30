@@ -14,6 +14,7 @@ export class ChatService {
   constructor() {
     this.openai = new OpenAI({
       apiKey: config.openAI.apiKey,
+      project: config.openAI.projectID,
       organization: config.openAI.organizationID,
     });
   }
