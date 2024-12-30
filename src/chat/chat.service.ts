@@ -80,12 +80,12 @@ export class ChatService {
         model: 'dall-e-3',
         size: '1024x1024',
         quality: 'standard',
-        response_format: 'b64_json',
+        response_format: 'url',
       });
 
       return {
         success: true,
-        message: response.data[0].b64_json,
+        message: response.data[0].url,
       };
     } catch (err) {
       this.logger.error(err);
@@ -107,7 +107,7 @@ export class ChatService {
 
       return {
         success: true,
-        message: await response.blob(),
+        message: await response.arrayBuffer(),
       };
     } catch (err) {
       this.logger.error(err);

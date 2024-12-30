@@ -32,9 +32,9 @@ export class ChatGateway
       chatHistory: Array<{
         role: Role;
         message: {
-          content?: string;
           url?: string;
-          audio?: string | Blob;
+          content?: string;
+          audio?: string | ArrayBuffer;
         };
         createdAt: Date;
       }>;
@@ -202,7 +202,7 @@ export class ChatGateway
     const aiMessage = {
       role: 'ai' as Role,
       createdAt: new Date(),
-      message: { content: response.message },
+      message: { url: response.message },
     };
 
     client.chatHistory.push(aiMessage);
