@@ -250,6 +250,16 @@ export class ChatGateway
     const messageText =
       prompt || chatHistory[chatHistory.length - 1]?.message?.content;
 
+    const userMessage = {
+      role: 'user' as Role,
+      message: {
+        content: messageText,
+      },
+      createdAt: new Date(),
+    };
+
+    client.chatHistory.push(userMessage);
+
     const response = await this.chatService.textToSpeechResponse(socket.id, {
       prompt: messageText,
     });
@@ -272,7 +282,7 @@ export class ChatGateway
 
     client.chatHistory.push(aiMessage);
 
-    socket.emit('audio-response', { userMessage: null, aiMessage });
+    socket.emit('audio-response', { userMessage, aiMessage });
   }
 
   @SubscribeMessage('fetch-messages')
