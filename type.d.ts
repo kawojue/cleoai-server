@@ -1,9 +1,16 @@
-interface UploadOption {
-  file: Express.Multer.File | Buffer;
-  folder: string;
-  maxSize?: number;
-  public_id?: string;
-  mimeTypes?: string[];
+type Role = 'user' | 'ai';
+
+interface Chat {
+  role: Role;
+  message: {
+    url?: string;
+    content?: string;
+    audio?: string | ArrayBuffer;
+  };
+  createdAt: Date;
 }
 
-type Role = 'user' | 'ai';
+interface Client {
+  connectedAt: number;
+  chatHistory: Array<Chat>;
+}

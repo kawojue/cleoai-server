@@ -20,27 +20,13 @@ import { PromptDTO, SendMessageDTO } from './chat.dto';
   },
 })
 export class ChatGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer()
   server: Server;
 
-  private clients: Map<
-    Socket,
-    {
-      connectedAt: number;
-      chatHistory: Array<{
-        role: Role;
-        message: {
-          url?: string;
-          content?: string;
-          audio?: string | ArrayBuffer;
-        };
-        createdAt: Date;
-      }>;
-    }
-  > = new Map();
-  private maxClients = 5_000;
+  private clients: Map<Socket, Client> = new Map();
+  private maxClients = 7_000;
 
   constructor(private readonly chatService: ChatService) {}
 
@@ -48,22 +34,26 @@ export class ChatGateway
     this.chatService.setServer(this.server);
   }
 
-  handleConnection(client: Socket) {
+  handleConnection(socket: Socket) {
     if (this.clients.size >= this.maxClients) {
       this.evictOldestClient();
     }
 
-    this.clients.set(client, {
+    this.clients.set(socket, {
       connectedAt: Date.now(),
       chatHistory: [],
     });
 
-    client.emit('connected', { message: 'Connected' });
+    socket.emit('connected', { message: 'Connected' });
+
+    this.chatService
+      .getServer()
+      .emit('online-clients', { total: this.clients.size });
   }
 
-  handleDisconnect(client: Socket) {
-    client.emit('disconnected', { message: 'Disconnected' });
-    this.clients.delete(client);
+  handleDisconnect(socket: Socket) {
+    socket.emit('disconnected', { message: 'Disconnected' });
+    this.clients.delete(socket);
   }
 
   private evictOldestClient() {
