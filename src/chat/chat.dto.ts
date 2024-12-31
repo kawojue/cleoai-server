@@ -1,11 +1,7 @@
-export class GenImageDTO {
+export class PromptDTO {
   prompt: string;
 }
 
-export class SendMessageDTO extends GenImageDTO {
+export class SendMessageDTO extends PromptDTO {
   url?: string;
-}
-
-export class TextToSpeechDTO {
-  text: string;
 }

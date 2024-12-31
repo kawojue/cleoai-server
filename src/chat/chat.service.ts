@@ -1,8 +1,8 @@
 import { OpenAI } from 'openai';
 import { Server, Socket } from 'socket.io';
 import { config } from 'configs/env.config';
+import { PromptDTO, SendMessageDTO } from './chat.dto';
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { GenImageDTO, SendMessageDTO, TextToSpeechDTO } from './chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -71,7 +71,7 @@ export class ChatService {
     }
   }
 
-  async imageResponse(clientId: string, { prompt }: GenImageDTO) {
+  async imageResponse(clientId: string, { prompt }: PromptDTO) {
     try {
       const response = await this.openai.images.generate({
         n: 1,
@@ -96,10 +96,18 @@ export class ChatService {
     }
   }
 
-  async textToSpeechResponse({ text }: TextToSpeechDTO) {
+  async textToSpeechResponse(clientId: string, { prompt }: PromptDTO) {
     try {
+      const promptAnswer = await this.promptResponse(clientId, {
+        prompt,
+      });
+
+      if (!promptAnswer.success) {
+        throw new Error(promptAnswer.message);
+      }
+
       const response = await this.openai.audio.speech.create({
-        input: text,
+        input: promptAnswer.message,
         voice: 'nova',
         model: 'tts-1',
         response_format: 'aac',
@@ -113,7 +121,7 @@ export class ChatService {
       this.logger.error(err);
       return {
         success: false,
-        message: 'An error occured',
+        message: 'Oops! Something went wrong..',
       };
     }
   }

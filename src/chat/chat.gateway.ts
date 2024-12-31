@@ -11,7 +11,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { HttpStatus } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { GenImageDTO, SendMessageDTO, TextToSpeechDTO } from './chat.dto';
+import { PromptDTO, SendMessageDTO } from './chat.dto';
 
 @WebSocketGateway({
   transports: ['polling', 'websocket'],
@@ -149,7 +149,7 @@ export class ChatGateway
   @SubscribeMessage('generate-image')
   async generateImage(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() { prompt }: GenImageDTO,
+    @MessageBody() { prompt }: PromptDTO,
   ) {
     const client = this.clients.get(socket);
 
@@ -213,7 +213,7 @@ export class ChatGateway
   @SubscribeMessage('text-to-speech')
   async textToSpeech(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() { text }: TextToSpeechDTO,
+    @MessageBody() { prompt }: PromptDTO,
   ) {
     const client = this.clients.get(socket);
 
@@ -225,10 +225,18 @@ export class ChatGateway
       );
     }
 
+    if (prompt && prompt.length > 150) {
+      return this.chatService.emitError(
+        socket,
+        HttpStatus.BAD_REQUEST,
+        'Prompt is too large',
+      );
+    }
+
     const chatHistory = client.chatHistory;
 
     if (
-      (!text && chatHistory.length === 0) ||
+      (!prompt && chatHistory.length === 0) ||
       (chatHistory.length > 0 &&
         !chatHistory[chatHistory.length - 1]?.message?.content)
     ) {
@@ -240,10 +248,10 @@ export class ChatGateway
     }
 
     const messageText =
-      text || chatHistory[chatHistory.length - 1]?.message?.content;
+      prompt || chatHistory[chatHistory.length - 1]?.message?.content;
 
-    const response = await this.chatService.textToSpeechResponse({
-      text: messageText,
+    const response = await this.chatService.textToSpeechResponse(socket.id, {
+      prompt: messageText,
     });
 
     if (!response.success) {
