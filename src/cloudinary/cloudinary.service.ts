@@ -23,7 +23,7 @@ export class CloudinaryService {
     });
   }
 
-  async upload({
+  upload({
     file,
     folder,
     maxSize,
@@ -84,7 +84,7 @@ export class CloudinaryService {
     });
   }
 
-  async delete(public_id: string) {
-    return await cloudinary.uploader.destroy(public_id);
+  elete(public_id: string) {
+    return cloudinary.uploader.destroy(public_id);
   }
 }
