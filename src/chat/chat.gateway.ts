@@ -114,10 +114,26 @@ export class ChatGateway
       );
     }
 
+    let image = '';
+
+    if (body?.url) {
+      const response = this.chatService.validateFile(body.url);
+
+      if (!response.success) {
+        return this.chatService.emitError(
+          socket,
+          response.status,
+          response.message,
+        );
+      }
+
+      image = response.file;
+    }
+
     const userMessage = {
       role: 'user' as Role,
       message: {
-        url: body.url,
+        url: image,
         content: body.prompt,
       },
       createdAt: new Date(),
@@ -125,7 +141,10 @@ export class ChatGateway
 
     client.chatHistory.push(userMessage);
 
-    const response = await this.chatService.promptResponse(socket.id, body);
+    const response = await this.chatService.promptResponse(socket.id, {
+      url: image,
+      prompt: body.prompt,
+    });
 
     if (!response.success) {
       return this.chatService.emitError(

@@ -27,6 +27,36 @@ export class ChatService {
     return this.server;
   }
 
+  validateFile(file: string) {
+    const maxSize = 524_288;
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+    const { fileSize, fileType } = this.getFileMetadata(file);
+
+    if (fileSize > maxSize) {
+      return {
+        success: false,
+        status: HttpStatus.BAD_REQUEST,
+        message: 'File size exceeds limit',
+      };
+    }
+
+    if (!allowedTypes.includes(fileType)) {
+      return {
+        success: false,
+        status: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        message: 'Unsupported file type',
+      };
+    }
+
+    return { success: true, file };
+  }
+
+  private getFileMetadata(file: string) {
+    const match = file.match(/^data:(.*?);base64,/);
+    const fileSize = Buffer.byteLength(file, 'base64');
+    return { fileType: match ? match[1] : '', fileSize };
+  }
+
   async promptResponse(clientId: string, body: SendMessageDTO) {
     const messages: any[] = [
       {

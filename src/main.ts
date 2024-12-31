@@ -10,8 +10,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://mycleoai.xyz'],
+    origin: [
+      'http://localhost:3000',
+      'https://mycleoai.xyz',
+      'https://www.mycleoai.xyz',
+    ],
     credentials: true,
+    preflightContinue: false,
     optionsSuccessStatus: 200,
     methods: 'GET,POST,DELETE,PATCH,PUT',
   });
