@@ -13,9 +13,4 @@ export const config = {
     organizationID: process.env.OPEN_AI_ORG_ID,
     maxTokens: parseInt(process.env.MAX_TOKENS, 10),
   },
-  cloudinary: {
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_SECRET,
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  },
 };
